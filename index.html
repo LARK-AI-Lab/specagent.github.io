@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="SpecAgent: Trajectory-Level Speculation with Semantic Verification for Tool-Using Agents">
+  <title>SpecAgent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/specagent.css">
+</head>
+<body>
+  <a class="work-button" href="https://github.com/LARK-AI-Lab">
+    <span>More Works</span>
+  </a>
+  <main>
+    <section class="hero">
+      <div class="container hero-container">
+        <div class="title-lockup">
+          <h1>SpecAgent: Trajectory-Level Speculation with Semantic Verification for Tool-Using Agents</h1>
+        </div>
+
+        <div class="authors">
+          <span>Zilin Wang<sup>1,2</sup></span>
+          <span>Yinhong Liu<sup>2,3,&dagger;,&Dagger;</sup></span>
+          <span>Chao Chen<sup>1,2</sup></span>
+          <span>Qun Liu<sup>2</sup></span>
+          <span>Zhijiang Guo<sup>1,4,&dagger;</sup></span>
+        </div>
+
+        <div class="affiliations">
+          <p><sup>1</sup>LARK, HKUST (GZ) &nbsp;·&nbsp; <sup>2</sup>Yinwang &nbsp;·&nbsp; <sup>3</sup>University of Cambridge &nbsp;·&nbsp; <sup>4</sup>HKUST</p>
+          <p><sup>&dagger;</sup>Corresponding authors &nbsp; <sup>&Dagger;</sup>Project leader</p>
+        </div>
+
+        <div class="actions">
+          <a class="button is-disabled" href="#bibtex" aria-disabled="true"><img class="button-logo" src="images/arxiv-logomark-small@2x.png" alt=""><span>Paper (coming soon)</span></a>
+          <a class="button" href="https://github.com/LARK-AI-Lab/SpecAgent"><img class="button-logo" src="images/github-logo.svg" alt=""><span>Code</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="teaser-section">
+      <div class="container">
+        <figure class="figure hero-figure">
+          <img src="images/specagent_demo.webp" alt="SpecAgent on one τ²-Bench Airline task: the weak model drafts and runs reads, the strong model reviews once and repairs the held write">
+        </figure>
+        <p class="lead" style="text-align:center;font-weight:600;">
+          A small model drafts the agent's trajectory and runs its reads; a large model reviews
+          the draft in one pass, keeps what is valid, and repairs only the first wrong step.
+        </p>
+      </div>
+    </section>
+
+    <section class="section is-light">
+      <div class="container narrow">
+        <h2>Abstract</h2>
+        <p>
+          Large language model agents solve tasks through long sequences of tool calls, and the
+          prevailing design has a single strong model generate every step, although many steps
+          are routine enough for a much smaller model. Existing ways of sharing this work keep
+          the strong model as the generator: routers decide which model produces each step, and
+          speculative methods check a small model's drafts one step at a time, usually against
+          the strong model's own action. We introduce SpecAgent, a collaboration protocol that
+          turns the strong model from the author of each step into a reviewer of steps drafted by
+          a weak model. The weak model executes read-only tool calls as it drafts, so that every
+          step is grounded in real observations, and holds the first action that would modify the
+          environment. The strong model then verifies the drafted segment in a single forward
+          pass, commits the longest prefix it judges semantically valid, and repairs the first
+          rejected step. Because verification replaces autoregressive decoding with parallel
+          prefill, the strong model decodes only short verdicts and occasional repairs rather
+          than every step.
+        </p>
+        <p>
+          On τ²-Bench, SpecAgent comes within one point of the strong model's success rate while
+          roughly halving memory traffic and wall time, and on AutomationBench and VitaBench it
+          recovers 44–75% of the quality gap while lowering both. In an edge–cloud deployment on
+          MCP-Atlas with three cloud models, it closes 53–75% of the weak–strong quality gap while
+          the strong model generates at most half as many tokens. These results suggest that a
+          strong model need not author every step of an agent: reviewing grounded drafts retains
+          most of its quality while cutting both latency and memory traffic.
+        </p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <h2>Method</h2>
+        <div class="method-grid">
+          <article>
+            <span class="step-label">Weak model</span>
+            <h3>Draft with real reads</h3>
+            <p>
+              The weak model drafts up to K steps. Read-only tool calls execute immediately, so
+              every drafted step builds on real observations. The first state-changing action is
+              held, not executed.
+            </p>
+          </article>
+          <article>
+            <span class="step-label">Strong model, one prefill pass</span>
+            <h3>Verify the segment</h3>
+            <p>
+              The strong model reads the drafted segment once and returns the longest prefix it
+              judges semantically valid, why the next step is wrong, and optionally a
+              replacement call. Valid progress is kept even when it differs from what the strong
+              model would have written.
+            </p>
+          </article>
+          <article>
+            <span class="step-label">Strong model, only on rejection</span>
+            <h3>Repair one step</h3>
+            <p>
+              A valid replacement executes directly; otherwise the strong model takes one repair
+              turn. The repair commits without a second review, and the weak model resumes from
+              the committed history.
+            </p>
+          </article>
+        </div>
+
+        <figure class="figure">
+          <img src="images/fig1_overview.png" alt="Strong-only decoding every step versus SpecAgent's draft, review, and repair">
+          <figcaption>
+            (a) A Strong-only agent generates every step by decoding. (b) SpecAgent lets the weak
+            model draft ahead, running reads at once and holding the first write. The strong model
+            reviews the draft in a single prefill pass, keeps the valid steps, and replaces the
+            rejected write; the weak model then resumes.
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section is-light">
+      <div class="container">
+        <h2>Main Results</h2>
+        <p>
+          Qwen3.5-4B drafts and Qwen3.5-397B-A17B reviews, both served on H20 GPUs. Resources count
+          both models and are shown relative to Strong-only.
+        </p>
+        <div class="table-wrap">
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th>Benchmark</th>
+                <th>Weak-only</th>
+                <th>Strong-only</th>
+                <th>SpecAgent</th>
+                <th>HBM-read</th>
+                <th>Wall time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>τ²-Bench Airline</td><td>80.0</td><td>86.0</td><td class="ours">86.0</td><td>0.44×</td><td>0.41×</td></tr>
+              <tr><td>τ²-Bench Retail</td><td>80.4</td><td>88.6</td><td class="ours">87.7</td><td>0.55×</td><td>0.54×</td></tr>
+              <tr><td>AutomationBench</td><td>6.8</td><td>15.2</td><td class="ours">10.5</td><td>0.81×</td><td>0.57×</td></tr>
+              <tr><td>VitaBench (Delivery)</td><td>34.0</td><td>48.0</td><td class="ours">44.5</td><td>0.62×</td><td>0.69×</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="table-note">
+          Pass@1 (%). Estimated FLOPs rise by 30–87%: the saving is memory traffic and time,
+          not arithmetic. Comparisons with AgentCollab and Speculative Actions and the full cost
+          tables are in the paper.
+        </p>
+
+        <figure class="figure">
+          <img src="images/fig2_pareto.png" alt="Quality against memory traffic and wall time, relative to Strong-only">
+          <figcaption>
+            Quality against memory traffic and wall time, relative to each domain's Strong-only
+            run (star). SpecAgent is the only collaborative method below Strong-only in both
+            memory traffic and wall time on every benchmark.
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <h2>Edge–Cloud Deployment on MCP-Atlas</h2>
+        <p>
+          On 101 MCP-Atlas tasks with real tool servers, Qwen3.5-4B runs on one local RTX 5090 and
+          the strong model is called through its provider's API. SpecAgent closes 53–75% of the
+          weak–strong gap while the strong model decodes 36–50% of its Strong-only tokens.
+        </p>
+        <div class="table-wrap">
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Pass@1</th>
+                <th>Strong output tokens</th>
+                <th>API cost ($)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Weak-only (4B)</td><td>44.6</td><td>–</td><td>0.00</td></tr>
+              <tr class="group"><th colspan="4">Strong: Qwen3.5-397B-A17B</th></tr>
+              <tr><td>Strong-only</td><td>72.3</td><td>3.6k</td><td>1.39</td></tr>
+              <tr><td>SpecAgent</td><td class="ours">59.4</td><td class="ours">1.8k</td><td class="ours">1.12</td></tr>
+              <tr class="group"><th colspan="4">Strong: GLM-5</th></tr>
+              <tr><td>Strong-only</td><td>76.2</td><td>4.6k</td><td>8.91</td></tr>
+              <tr><td>SpecAgent</td><td class="ours">67.3</td><td class="ours">2.1k</td><td class="ours">5.54</td></tr>
+              <tr class="group"><th colspan="4">Strong: DeepSeek-V4-Flash-0731</th></tr>
+              <tr><td>Strong-only</td><td>84.2</td><td>10.6k</td><td>1.37</td></tr>
+              <tr><td>SpecAgent</td><td class="ours">74.3</td><td class="ours">3.8k</td><td class="ours">0.81</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="table-note">Strong output tokens are per task; API cost is the total over all tasks at list price.</p>
+      </div>
+    </section>
+
+    <section class="section is-light">
+      <div class="container">
+        <h2>Where the Savings Come From</h2>
+        <p>
+          Decoding is bound by memory bandwidth, while a verification prefill over a whole chunk
+          is bound by compute. Strong verification and repair carry most of SpecAgent's compute
+          but a minority of its memory traffic; weak drafting, itself memory-bound decoding, does
+          the reverse. The strong model's share of decoded tokens predicts its share of memory
+          traffic to within 0.01 on all four main-table benchmarks.
+        </p>
+        <figure class="figure">
+          <img src="images/fig5_phase.png" alt="SpecAgent's cost by phase relative to Strong-only">
+          <figcaption>
+            SpecAgent's cost by phase, relative to Strong-only (dashed).
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section" id="bibtex">
+      <div class="container narrow">
+        <h2>BibTeX</h2>
+        <pre><code>@article{wang2026specagent,
+  title   = {Trajectory-Level Speculation with Semantic Verification for Tool-Using Agents},
+  author  = {Wang, Zilin and Liu, Yinhong and Chen, Chao and Liu, Qun and Guo, Zhijiang},
+  journal = {arXiv preprint},
+  year    = {2026}
+}</code></pre>
+      </div>
+    </section>
+
+  </main>
+</body>
+</html>
