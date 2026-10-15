@@ -140,12 +140,12 @@
       <div class="prose">
         <p class="section-kicker">04 / Where the saving comes from</p>
         <h2 id="analysis-title">The saving is decoding, not arithmetic.</h2>
-        <p>Decoding is bound by memory bandwidth, while a verification prefill over a whole chunk is bound by compute. Strong verification and repair carry most of SpecAgent's compute but a minority of its memory traffic; Weak drafting, itself memory-bound decoding, does the reverse. Counting the Strong model's verdict and repair tokens predicts its share of memory traffic to within 0.01 on all four benchmarks.</p>
+        <p>Decoding is bound by memory bandwidth, while a verification prefill over a whole chunk is bound by compute. Strong verification and repair carry 81–85% of SpecAgent's compute but a much smaller share of its memory traffic (39–66%); Weak drafting, itself memory-bound decoding, accounts for only 15–19% of compute but 34–61% of memory traffic. Counting the Strong model's verdict and repair tokens predicts its share of memory traffic to within 0.01 on all four benchmarks.</p>
       </div>
       <figure class="figure-wide paper-figure">
         <div class="figure-heading"><span class="figure-label">Figure 3 · SpecAgent's cost by phase</span><span class="figure-note">Relative to Strong-only (dashed)</span></div>
         <div class="paper-image"><img src="images/fig5_phase.png" alt="SpecAgent's compute, memory traffic, and wall time split into Weak drafting, Strong verification, and Strong repair, relative to Strong-only."></div>
-        <figcaption>Strong verification and repair dominate compute but not memory traffic.</figcaption>
+        <figcaption>Strong verification and repair dominate compute but take a much smaller share of memory traffic.</figcaption>
       </figure>
       <div class="prose">
         <h3>What makes it work</h3>
